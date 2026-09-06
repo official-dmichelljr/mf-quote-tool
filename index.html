@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Moving Forward Quote Tool</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0d1c2b;
+      --card: #13283b;
+      --card-hover: #183149;
+      --text: #f8fbff;
+      --text-soft: #d9efff;
+      --muted: #9db5c8;
+      --border: #31516a;
+      --border-soft: #233f56;
+      --accent: #ff6b00;
+      --accent-hover: #ff8126;
+      --total-bg: #edf8ff;
+      --total-text: #081522;
+      --total-muted: #496173;
+      --alert-bg: #37190b;
+      --shadow: 0 15px 34px rgba(0, 0, 0, 0.28);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--bg); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 12px;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(60, 102, 137, 0.22), transparent 32rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    button, input, select { font: inherit; }
+
+    .app {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 9px;
+      padding: 12px 15px;
+      background: linear-gradient(135deg, #0c1d2e, #132d45);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-weight: 950;
+      letter-spacing: -0.06em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.2vw, 27px);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .eyebrow {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .header-status {
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+      gap: 9px;
+      align-items: start;
+    }
+
+    .entry-panel, .result-panel {
+      min-width: 0;
+    }
+
+    .card {
+      padding: 11px;
+      background: var(--panel);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.16);
+    }
+
+    .card + .card { margin-top: 9px; }
+
+    h2 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .quote-fields {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 0.65fr 0.8fr 0.75fr;
+      gap: 8px;
+    }
+
+    .field { min-width: 0; }
+
+    .field label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      min-height: 42px;
+      padding: 7px 9px;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    select:hover, input[type="text"]:hover, input[type="number"]:hover { background: var(--card-hover); }
+
+    select:focus-visible,
+    input:focus-visible,
+    button:focus-visible,
+    a:focus-visible {
+      border-color: var(--accent);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px rgba(255, 107, 0, 0.18);
+    }
+
+    .helper {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 7px 8px;
+      color: var(--text-soft);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 850;
+      cursor: pointer;
+      transition: background 150ms ease;
+    }
+
+    .check-item:hover { background: var(--card-hover); }
+
+    .check-item:focus-within {
+      border-color: var(--accent);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px rgba(255, 107, 0, 0.18);
+    }
+
+    .check-item input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      flex: 0 0 18px;
+      accent-color: #9fdcff;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    button, .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 120ms ease, background 150ms ease, border-color 150ms ease;
+    }
+
+    button:active, .button-link:active { transform: translateY(1px); }
+
+    .primary {
+      color: #190b00;
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 7px 18px rgba(255, 107, 0, 0.22);
+    }
+
+    .primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .secondary, .button-link {
+      color: var(--text);
+      background: var(--card);
+    }
+
+    .secondary:hover, .button-link:hover {
+      background: var(--card-hover);
+      border-color: #54758d;
+    }
+
+    .result-panel {
+      position: sticky;
+      top: 12px;
+      display: grid;
+      gap: 9px;
+    }
+
+    #validationAlert {
+      display: none;
+      padding: 9px 11px;
+      color: var(--text);
+      background: var(--alert-bg);
+      border: 2px solid var(--accent);
+      border-radius: 9px;
+      font-weight: 850;
+    }
+
+    .noscript-alert {
+      margin-bottom: 9px;
+      padding: 10px 12px;
+      color: var(--text);
+      background: var(--alert-bg);
+      border: 2px solid var(--accent);
+      border-radius: 9px;
+      font-weight: 850;
+    }
+
+    #resultPlaceholder {
+      display: grid;
+      place-items: center;
+      min-height: 155px;
+      padding: 20px;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+    }
+
+    #total {
+      display: none;
+      padding: 17px;
+      color: var(--total-text);
+      background: var(--total-bg);
+      border: 1px solid #ffffff;
+      border-radius: var(--radius);
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.32);
+    }
+
+    .total-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--total-muted);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .total-value {
+      display: block;
+      font-size: clamp(34px, 5vw, 48px);
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .total-meta {
+      display: block;
+      margin-top: 7px;
+      color: var(--total-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    #breakdown {
+      display: none;
+      max-height: 395px;
+      overflow: auto;
+      padding: 12px;
+      color: var(--text-soft);
+      background: var(--panel);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      scrollbar-color: var(--border) var(--panel);
+    }
+
+    .output-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    #customerPrint {
+      display: none;
+    }
+
+    .customer-print-total {
+      margin-bottom: 16px;
+      padding: 16px 18px;
+      color: var(--total-text);
+      background: var(--total-bg);
+      border: 1px solid #ffffff;
+      border-radius: var(--radius);
+    }
+
+    .customer-print-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 24px;
+      margin-bottom: 18px;
+    }
+
+    .customer-print-item {
+      padding-bottom: 7px;
+      border-bottom: 1px solid #b6c4cf;
+    }
+
+    .customer-print-item strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #496173;
+      font-size: 9pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .customer-print-notes {
+      padding-top: 12px;
+      border-top: 2px solid #203a52;
+      color: #0b1724;
+      font-size: 9.5pt;
+      line-height: 1.45;
+    }
+
+    .print-note {
+      margin: -2px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .result-panel { position: static; }
+      #breakdown { max-height: none; }
+    }
+
+    @media (max-width: 760px) {
+      .quote-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .checkbox-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 7px; }
+      .app-header { align-items: flex-start; padding: 11px; }
+      .header-status { display: none; }
+      .quote-fields, .checkbox-grid, .actions, .output-actions { grid-template-columns: 1fr; }
+      .card { padding: 10px; }
+      select, input[type="text"], input[type="number"], button, .button-link, .check-item { min-height: 48px; }
+    }
+
+    @media print {
+      @page { size: auto; margin: 0.35in; }
+      :root { color-scheme: light; }
+      html, body { background: #ffffff !important; }
+      body { min-height: auto; padding: 0; color: #0b1724; font-size: 11pt; }
+      .app { width: 100%; max-width: none; }
+      .app-header {
+        padding: 0 0 8px;
+        margin: 0 0 9px;
+        color: #0b1724;
+        background: #ffffff !important;
+        border: 0;
+        border-bottom: 2px solid #203a52;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .brand-mark { color: #0b1724; background: #eef4f8; border-color: #9aaebe; }
+      .eyebrow { color: #475d70; }
+      .header-status { display: none !important; }
+      .entry-panel, .output-actions, .print-note, #resultPlaceholder, #validationAlert { display: none !important; }
+      .dashboard, .result-panel {
+        display: block;
+        position: static !important;
+      }
+      #total {
+        display: block !important;
+        margin: 0 0 8px;
+        padding: 10px 12px;
+        color: #0b1724;
+        background: #edf6fb !important;
+        border: 1px solid #9fb3c3;
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      .total-label { font-size: 8pt; }
+      .total-value { font-size: 26pt; }
+      .total-meta { margin-top: 4px; font-size: 8.5pt; }
+      #breakdown {
+        display: block !important;
+        max-height: none;
+        overflow: visible;
+        padding: 7px 0 0;
+        color: #0b1724;
+        background: #ffffff !important;
+        border: 0;
+        font-size: 8.25pt;
+        line-height: 1.2;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
+      body.print-customer #total,
+      body.print-customer #breakdown {
+        display: none !important;
+      }
+      body.print-customer .app-header {
+        display: none !important;
+      }
+      body.print-customer #customerPrint {
+        display: block !important;
+      }
+      body.print-dispatch #customerPrint {
+        display: none !important;
+      }
+      #customerPrint {
+        color: #0b1724;
+        background: #ffffff !important;
+      }
+      .customer-print-total {
+        margin-bottom: 13px;
+        padding: 12px 14px;
+        background: #edf6fb !important;
+        border-color: #9fb3c3;
+        break-inside: avoid;
+      }
+      .customer-print-grid {
+        margin-bottom: 14px;
+        gap: 7px 22px;
+        break-inside: avoid;
+      }
+      .customer-print-notes {
+        padding-top: 10px;
+        break-inside: avoid;
+      }
+      .customer-print-notes p {
+        margin: 6px 0 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">MF</div>
+        <div>
+          <h1>Moving Forward Quote Tool</h1>
+          <p class="eyebrow">Dispatch Operations</p>
+        </div>
+      </div>
+      <div class="header-status">Internal quoting dashboard · v16</div>
+    </header>
+
+    <noscript>
+      <div class="noscript-alert">This file viewer has JavaScript disabled. Open this quote tool in Safari from a hosted web link to calculate quotes.</div>
+    </noscript>
+
+    <form id="quoteForm" novalidate>
+      <div class="dashboard">
+        <div class="entry-panel">
+          <section class="card" aria-labelledby="quoteDetailsHeading">
+            <h2 id="quoteDetailsHeading">Quote Details</h2>
+            <div class="quote-fields">
+              <div class="field">
+                <label for="customer">Customer</label>
+                <select id="customer" tabindex="1" autofocus>
+                  <option value="DHL">DHL</option>
+                  <option value="Airspace">Airspace</option>
+                  <option value="LaserShip (OnTrac)">LaserShip (OnTrac)</option>
+                  <option value="Validated">Validated</option>
+                  <option value="Smith &amp; Nephew">Smith &amp; Nephew</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="quotedOrderNumber">Quoted Order Number</label>
+                <input id="quotedOrderNumber" type="text" inputmode="text" pattern="[A-Za-z0-9]+" maxlength="40" autocomplete="off" tabindex="2" required aria-describedby="orderNumberHelp" oninput="this.value=this.value.replace(/[^A-Za-z0-9]/g,'')" />
+              </div>
+              <div class="field">
+                <label for="vehicle">Vehicle</label>
+                <select id="vehicle" tabindex="3">
+                  <option value="car">Car</option>
+                  <option value="cargoVan">Cargo Van</option>
+                  <option value="tempConVan">TCV</option>
+                  <option value="truck">Truck</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="miles">Miles</label>
+                <input id="miles" type="number" min="0" step="0.1" value="0" inputmode="decimal" tabindex="4" required />
+              </div>
+              <div class="field">
+                <label for="international">International?</label>
+                <select id="international" tabindex="5">
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fuelPercent">Fuel Surcharge %</label>
+                <input id="fuelPercent" type="number" min="0" step="0.1" value="0" inputmode="decimal" tabindex="6" required />
+              </div>
+            </div>
+            <p class="helper"><span id="orderNumberHelp">Order numbers may contain letters and numbers only.</span> Base: Car $50, Cargo Van $100, TCV $160, Truck $260. Mileage: Car $1.50/mi, Cargo Van and TCV $1.90/mi, Truck $3.00/mi. International: $45 / $55 / $55 / $70.</p>
+          </section>
+
+          <section class="card" aria-labelledby="addonsHeading">
+            <h2 id="addonsHeading">Service Add-Ons</h2>
+            <div class="checkbox-grid" role="group" aria-labelledby="addonsHeading">
+              <label class="check-item" for="secondMan"><input type="checkbox" id="secondMan" tabindex="7" /><span>Second Man</span></label>
+              <label class="check-item" for="dangerousGoods"><input type="checkbox" id="dangerousGoods" tabindex="8" /><span>Dangerous Goods</span></label>
+              <label class="check-item" for="amPm"><input type="checkbox" id="amPm" tabindex="9" /><span>AM/PM</span></label>
+              <label class="check-item" for="holiday"><input type="checkbox" id="holiday" tabindex="10" /><span>Holiday</span></label>
+              <label class="check-item" for="weekend"><input type="checkbox" id="weekend" tabindex="11" /><span>Weekend</span></label>
+            </div>
+            <p class="helper">Second Man is 50% of the vehicle charge. Dangerous Goods is $25. Holiday is $50. AM/PM and Weekend vary by vehicle.</p>
+          </section>
+
+          <div id="validationAlert" role="alert" aria-live="assertive"></div>
+
+          <div class="actions" aria-label="Quote controls">
+            <button id="calculateButton" class="primary" type="button" tabindex="12" onclick="calculateQuote(); return false;">Calculate Quote</button>
+            <button id="resetButton" class="secondary" type="reset" tabindex="13">Reset</button>
+            <button id="copyButton" class="secondary" type="button" tabindex="14" onclick="copyQuote(); return false;">Copy for Dispatch</button>
+            <button id="copyCustomerButton" class="secondary" type="button" tabindex="15" onclick="copyCustomerQuote(); return false;">Copy for Customer</button>
+          </div>
+        </div>
+
+        <aside class="result-panel" aria-label="Quote results">
+          <div id="resultPlaceholder">Enter the route details and calculate the quote to view the final cost and invoice breakdown.</div>
+          <div id="total" role="status" aria-live="polite"></div>
+          <div id="breakdown" aria-label="Quote breakdown"></div>
+          <section id="customerPrint" aria-label="Customer quote">
+            <div class="customer-print-total">
+              <span class="total-label">Total Cost</span>
+              <span id="customerPrintTotal" class="total-value"></span>
+            </div>
+            <div class="customer-print-grid">
+              <div class="customer-print-item"><strong>Order Number</strong><span id="customerPrintOrder"></span></div>
+              <div class="customer-print-item"><strong>Customer</strong><span id="customerPrintCustomer"></span></div>
+              <div class="customer-print-item"><strong>Vehicle</strong><span id="customerPrintVehicle"></span></div>
+              <div class="customer-print-item"><strong>Miles</strong><span id="customerPrintMiles"></span></div>
+              <div class="customer-print-item"><strong>International</strong><span id="customerPrintInternational"></span></div>
+            </div>
+            <div class="customer-print-notes">
+              <strong>Notes</strong>
+              <p>Quotes exclude wait time, additional stops, and unforeseen accessorial charges and are based solely on the information provided.</p>
+              <p>Routes are subject to availability. Moving Forward will communicate significant changes to cost or delivery time.</p>
+            </div>
+          </section>
+          <div class="output-actions" aria-label="Quote output controls">
+            <a id="emailDispatch" class="button-link" href="mailto:dispatch@movingforward.vip" tabindex="16">Email to Dispatch</a>
+            <button id="printButton" class="secondary" type="button" tabindex="17" onclick="printQuote(); return false;">Print for Dispatch</button>
+            <button id="printCustomerButton" class="secondary" type="button" tabindex="18" onclick="printCustomerQuote(); return false;">Print for Customer</button>
+            <button id="pdfButton" class="secondary" type="button" tabindex="19" onclick="printQuote(); return false;">Save Dispatch PDF</button>
+            <button id="pdfCustomerButton" class="secondary" type="button" tabindex="20" onclick="printCustomerQuote(); return false;">Save Customer PDF</button>
+          </div>
+          <p class="print-note">PDF buttons open the browser print dialog with the selected Dispatch or Customer layout.</p>
+        </aside>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const vehiclePricing = {
+      car: { label: "Car", base: 50, mileage: 1.50, international: 45, amPm: 25, weekend: 25 },
+      cargoVan: { label: "Cargo Van", base: 100, mileage: 1.90, international: 55, amPm: 35, weekend: 35 },
+      tempConVan: { label: "Temperature Controlled Van", base: 160, mileage: 1.90, international: 55, amPm: 35, weekend: 35 },
+      truck: { label: "Truck", base: 260, mileage: 3.00, international: 70, amPm: 50, weekend: 50 }
+    };
+
+    const quoteForm = document.getElementById("quoteForm");
+    const totalBox = document.getElementById("total");
+    const breakdownBox = document.getElementById("breakdown");
+    const validationAlert = document.getElementById("validationAlert");
+    const resultPlaceholder = document.getElementById("resultPlaceholder");
+    const emailDispatch = document.getElementById("emailDispatch");
+    let customerQuoteText = "";
+
+    function money(value) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function readNonNegativeNumber(element, label) {
+      const rawValue = element.value.trim();
+      const value = Number(rawValue);
+      if (rawValue === "" || !isFinite(value) || value < 0) {
+        throw { element: element, message: label + " must be a valid number of zero or greater." };
+      }
+      return value;
+    }
+
+    function readOrderNumber() {
+      const element = document.getElementById("quotedOrderNumber");
+      const value = element.value.trim();
+      if (!value || !/^[A-Za-z0-9]+$/.test(value)) {
+        throw { element: element, message: "Quoted Order Number is required and may contain letters and numbers only." };
+      }
+      return value;
+    }
+
+    function clearValidation() {
+      validationAlert.textContent = "";
+      validationAlert.style.display = "none";
+      Array.prototype.forEach.call(document.querySelectorAll("[aria-invalid='true']"), function (element) {
+        element.removeAttribute("aria-invalid");
+      });
+    }
+
+    function showValidationError(error) {
+      validationAlert.textContent = error.message || "Please review the highlighted field and try again.";
+      validationAlert.style.display = "block";
+      if (error.element) {
+        error.element.setAttribute("aria-invalid", "true");
+        error.element.focus();
+      }
+    }
+
+    function addTotalContent(customer, orderNumber, vehicleLabel, miles, total) {
+      const label = document.createElement("span");
+      const value = document.createElement("span");
+      const meta = document.createElement("span");
+      label.className = "total-label";
+      value.className = "total-value";
+      meta.className = "total-meta";
+      label.textContent = "Total Cost";
+      value.textContent = money(total);
+      meta.textContent = "Order " + orderNumber + " · " + customer + " · " + vehicleLabel + " · " + miles.toFixed(1) + " miles";
+      while (totalBox.firstChild) {
+        totalBox.removeChild(totalBox.firstChild);
+      }
+      totalBox.appendChild(label);
+      totalBox.appendChild(value);
+      totalBox.appendChild(meta);
+    }
+
+    function calculateQuote() {
+      clearValidation();
+      try {
+        const customer = document.getElementById("customer").value;
+        const orderNumber = readOrderNumber();
+        const vehicleKey = document.getElementById("vehicle").value;
+        const miles = readNonNegativeNumber(document.getElementById("miles"), "Miles");
+        const fuelPercent = readNonNegativeNumber(document.getElementById("fuelPercent"), "Fuel surcharge");
+        const internationalSelected = document.getElementById("international").value === "yes";
+        const secondManSelected = document.getElementById("secondMan").checked;
+        const dangerousGoodsSelected = document.getElementById("dangerousGoods").checked;
+        const amPmSelected = document.getElementById("amPm").checked;
+        const holidaySelected = document.getElementById("holiday").checked;
+        const weekendSelected = document.getElementById("weekend").checked;
+        const vehicle = vehiclePricing[vehicleKey];
+
+        if (!vehicle) {
+          throw { element: document.getElementById("vehicle"), message: "Please select a valid vehicle." };
+        }
+
+        const baseRate = vehicle.base;
+        const mileageCharge = miles * vehicle.mileage;
+        const vehicleCharge = baseRate + mileageCharge;
+        const internationalFee = internationalSelected ? vehicle.international : 0;
+        const fuelSurcharge = vehicleCharge * (fuelPercent / 100);
+        const secondManFee = secondManSelected ? vehicleCharge * 0.50 : 0;
+        const dangerousGoodsFee = dangerousGoodsSelected ? 25 : 0;
+        const amPmFee = amPmSelected ? vehicle.amPm : 0;
+        const holidayFee = holidaySelected ? 50 : 0;
+        const weekendFee = weekendSelected ? vehicle.weekend : 0;
+        const total = vehicleCharge + internationalFee + fuelSurcharge + secondManFee + dangerousGoodsFee + amPmFee + holidayFee + weekendFee;
+
+        const breakdown = [
+          "MOVING FORWARD — QUOTE MANIFEST",
+          "================================",
+          "Customer:             " + customer,
+          "Quoted Order Number:  " + orderNumber,
+          "Vehicle:              " + vehicle.label,
+          "Miles:                " + miles.toFixed(1),
+          "International:        " + (internationalSelected ? "Yes" : "No"),
+          "Fuel Surcharge:       " + fuelPercent.toFixed(1) + "%",
+          "",
+          "SELECTED SERVICES",
+          "Second Man:           " + (secondManSelected ? "Yes" : "No"),
+          "Dangerous Goods:      " + (dangerousGoodsSelected ? "Yes" : "No"),
+          "AM/PM:                " + (amPmSelected ? "Yes" : "No"),
+          "Holiday:              " + (holidaySelected ? "Yes" : "No"),
+          "Weekend:              " + (weekendSelected ? "Yes" : "No"),
+          "",
+          "CHARGE BREAKDOWN",
+          "Base Rate:            " + money(baseRate),
+          "Mileage Charge:       " + money(mileageCharge),
+          "Vehicle Subtotal:     " + money(vehicleCharge),
+          "International Fee:    " + money(internationalFee),
+          "Fuel Surcharge:       " + money(fuelSurcharge),
+          "Second Man:           " + money(secondManFee),
+          "Dangerous Goods:      " + money(dangerousGoodsFee),
+          "AM/PM:                " + money(amPmFee),
+          "Holiday:              " + money(holidayFee),
+          "Weekend:              " + money(weekendFee),
+          "================================",
+          "TOTAL COST:           " + money(total),
+          "================================",
+          "",
+          "Quotes exclude wait time, additional stops, and unforeseen accessorial charges and are based solely on the information provided.",
+          "",
+          "Routes are subject to availability. Moving Forward will communicate significant changes to cost or delivery time."
+        ].join("\n");
+
+        customerQuoteText = [
+          "MOVING FORWARD — CUSTOMER QUOTE",
+          "================================",
+          "TOTAL COST:           " + money(total),
+          "Order Number:         " + orderNumber,
+          "Customer:             " + customer,
+          "Vehicle:              " + vehicle.label,
+          "Miles:                " + miles.toFixed(1),
+          "International:        " + (internationalSelected ? "Yes" : "No"),
+          "================================",
+          "",
+          "NOTES",
+          "Quotes exclude wait time, additional stops, and unforeseen accessorial charges and are based solely on the information provided.",
+          "",
+          "Routes are subject to availability. Moving Forward will communicate significant changes to cost or delivery time."
+        ].join("\n");
+
+        addTotalContent(customer, orderNumber, vehicle.label, miles, total);
+        breakdownBox.textContent = breakdown;
+        document.getElementById("customerPrintTotal").textContent = money(total);
+        document.getElementById("customerPrintOrder").textContent = orderNumber;
+        document.getElementById("customerPrintCustomer").textContent = customer;
+        document.getElementById("customerPrintVehicle").textContent = vehicle.label;
+        document.getElementById("customerPrintMiles").textContent = miles.toFixed(1);
+        document.getElementById("customerPrintInternational").textContent = internationalSelected ? "Yes" : "No";
+        totalBox.style.display = "block";
+        breakdownBox.style.display = "block";
+        resultPlaceholder.style.display = "none";
+
+        if (window.innerWidth <= 980) {
+          window.setTimeout(function () {
+            totalBox.scrollIntoView(true);
+          }, 0);
+        }
+
+        const subject = "Moving Forward Quote — Order " + orderNumber + " — " + customer + " — " + money(total);
+        emailDispatch.href = "mailto:dispatch@movingforward.vip?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(breakdown);
+        return breakdown;
+      } catch (error) {
+        showValidationError(error);
+        return null;
+      }
+    }
+
+    function resetForm() {
+      window.requestAnimationFrame(function () {
+        clearValidation();
+        totalBox.style.display = "none";
+        breakdownBox.style.display = "none";
+        totalBox.textContent = "";
+        breakdownBox.textContent = "";
+        resultPlaceholder.style.display = "grid";
+        customerQuoteText = "";
+        emailDispatch.href = "mailto:dispatch@movingforward.vip";
+        document.getElementById("customer").focus();
+      });
+    }
+
+    function showCopySuccess(button, originalLabel) {
+      button.textContent = "Copied";
+      window.setTimeout(function () { button.textContent = originalLabel; }, 1600);
+    }
+
+    function legacyCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.setAttribute("readonly", "");
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      textArea.setSelectionRange(0, textArea.value.length);
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return copied;
+    }
+
+    function copyText(text, buttonId, originalLabel) {
+      const button = document.getElementById(buttonId);
+
+      function fallbackCopy() {
+        try {
+          if (legacyCopyText(text)) {
+            showCopySuccess(button, originalLabel);
+            return;
+          }
+        } catch (error) {
+          // Continue to the visible error message below.
+        }
+        validationAlert.textContent = "Automatic copy is unavailable. Select and copy the visible quote manually.";
+        validationAlert.style.display = "block";
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function () {
+          showCopySuccess(button, originalLabel);
+        }).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    }
+
+    function copyQuote() {
+      const dispatchQuote = calculateQuote();
+      if (dispatchQuote) copyText(dispatchQuote, "copyButton", "Copy for Dispatch");
+    }
+
+    function copyCustomerQuote() {
+      if (calculateQuote()) copyText(customerQuoteText, "copyCustomerButton", "Copy for Customer");
+    }
+
+    function clearPrintMode() {
+      document.body.classList.remove("print-dispatch");
+      document.body.classList.remove("print-customer");
+    }
+
+    function openPrintDialog(audience) {
+      if (!calculateQuote()) return;
+      clearPrintMode();
+      document.body.classList.add(audience === "customer" ? "print-customer" : "print-dispatch");
+      void document.body.offsetHeight;
+      window.setTimeout(function () {
+        window.print();
+      }, 100);
+    }
+
+    function printQuote() {
+      openPrintDialog("dispatch");
+    }
+
+    function printCustomerQuote() {
+      openPrintDialog("customer");
+    }
+
+    quoteForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      calculateQuote();
+    });
+
+    quoteForm.addEventListener("keydown", function (event) {
+      const tagName = event.target.tagName ? event.target.tagName.toLowerCase() : "";
+      if ((event.key === "Enter" || event.keyCode === 13) && (tagName === "input" || tagName === "select")) {
+        event.preventDefault();
+        calculateQuote();
+      }
+    });
+
+    quoteForm.addEventListener("reset", resetForm);
+    window.addEventListener("afterprint", clearPrintMode);
+    emailDispatch.addEventListener("click", function (event) {
+      if (!calculateQuote()) event.preventDefault();
+    });
+  </script>
+</body>
+</html>
