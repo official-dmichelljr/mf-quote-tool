@@ -166,7 +166,7 @@ async function readPricing(database) {
   if (!updatedAt || fuelSetting.updated_at > updatedAt) updatedAt = fuelSetting.updated_at;
 
   return {
-    version: 19,
+    version: 20,
     updatedAt,
     fuelSurchargePercent: Number(fuelSetting.setting_value),
     vehicles
