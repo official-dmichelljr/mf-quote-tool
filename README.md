@@ -8,5 +8,7 @@ Cloudflare Pages deploys this repository automatically. The `main` branch is
 production, and `index.html` is the active page. Read
 [`DEPLOYMENT_WORKFLOW.md`](DEPLOYMENT_WORKFLOW.md) before publishing changes.
 
-Vehicle pricing is stored in Cloudflare D1. The administrator PIN is stored as
-the encrypted Cloudflare secret `ADMIN_PIN` and must never be committed.
+Vehicle, surcharge, and operational pricing is stored in Cloudflare D1. The
+fuel surcharge is a shared percentage managed from the protected admin panel.
+The administrator PIN is stored as the encrypted Cloudflare secret `ADMIN_PIN`
+and must never be committed.

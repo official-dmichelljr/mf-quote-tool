@@ -1,6 +1,20 @@
 const VEHICLE_KEYS = ["car", "cargoVan", "tempConVan", "truck"];
-const PRICE_FIELDS = ["base", "mileage", "international", "amPm", "weekend"];
+const PRICE_FIELDS = [
+  "base",
+  "mileage",
+  "international",
+  "amPm",
+  "weekend",
+  "holiday",
+  "additionalStop",
+  "waitMinute",
+  "palletJack",
+  "secondManMile",
+  "pickHold",
+  "hazmat"
+];
 const MAX_RATE = 100000;
+const MAX_PERCENT = 1000;
 
 function jsonResponse(data, status) {
   return new Response(JSON.stringify(data), {
@@ -95,17 +109,36 @@ function normalizePricingPayload(payload) {
     });
   });
 
-  return normalized;
+  const fuelSurchargePercent = Number(payload.fuelSurchargePercent);
+  if (!Number.isFinite(fuelSurchargePercent) || fuelSurchargePercent < 0 || fuelSurchargePercent > MAX_PERCENT) {
+    throw new Error("Invalid fuel surcharge percentage.");
+  }
+
+  // TCV always follows the complete Truck price schedule.
+  normalized.tempConVan = { ...normalized.truck };
+
+  return {
+    vehicles: normalized,
+    fuelSurchargePercent: Math.round(fuelSurchargePercent * 100) / 100
+  };
 }
 
 async function readPricing(database) {
   const result = await database.prepare(
-    `SELECT vehicle_key, label, base, mileage, international, am_pm, weekend, updated_at
+    `SELECT vehicle_key, label, base, mileage, international, am_pm, weekend, holiday,
+            additional_stop, wait_minute, pallet_jack, second_man_mile, pick_hold, hazmat,
+            updated_at
      FROM vehicle_pricing
      ORDER BY vehicle_key`
   ).all();
 
-  if (!result.results || result.results.length !== VEHICLE_KEYS.length) {
+  const fuelSetting = await database.prepare(
+    `SELECT setting_value, updated_at
+     FROM pricing_settings
+     WHERE setting_key = 'fuel_surcharge_percent'`
+  ).first();
+
+  if (!result.results || result.results.length !== VEHICLE_KEYS.length || !fuelSetting) {
     throw new Error("Vehicle pricing has not been initialized.");
   }
 
@@ -118,12 +151,26 @@ async function readPricing(database) {
       mileage: Number(row.mileage),
       international: Number(row.international),
       amPm: Number(row.am_pm),
-      weekend: Number(row.weekend)
+      weekend: Number(row.weekend),
+      holiday: Number(row.holiday),
+      additionalStop: Number(row.additional_stop),
+      waitMinute: Number(row.wait_minute),
+      palletJack: Number(row.pallet_jack),
+      secondManMile: Number(row.second_man_mile),
+      pickHold: Number(row.pick_hold),
+      hazmat: Number(row.hazmat)
     };
     if (!updatedAt || row.updated_at > updatedAt) updatedAt = row.updated_at;
   });
 
-  return { version: 18, updatedAt, vehicles };
+  if (!updatedAt || fuelSetting.updated_at > updatedAt) updatedAt = fuelSetting.updated_at;
+
+  return {
+    version: 19,
+    updatedAt,
+    fuelSurchargePercent: Number(fuelSetting.setting_value),
+    vehicles
+  };
 }
 
 async function handleGetPricing(env) {
@@ -181,11 +228,13 @@ async function handleUpdatePricing(request, env) {
   const statements = [];
 
   VEHICLE_KEYS.forEach((vehicleKey) => {
-    const next = normalized[vehicleKey];
+    const next = normalized.vehicles[vehicleKey];
     statements.push(
       env.DB.prepare(
         `UPDATE vehicle_pricing
-         SET base = ?, mileage = ?, international = ?, am_pm = ?, weekend = ?, updated_at = ?
+         SET base = ?, mileage = ?, international = ?, am_pm = ?, weekend = ?, holiday = ?,
+             additional_stop = ?, wait_minute = ?, pallet_jack = ?, second_man_mile = ?,
+             pick_hold = ?, hazmat = ?, updated_at = ?
          WHERE vehicle_key = ?`
       ).bind(
         next.base,
@@ -193,6 +242,13 @@ async function handleUpdatePricing(request, env) {
         next.international,
         next.amPm,
         next.weekend,
+        next.holiday,
+        next.additionalStop,
+        next.waitMinute,
+        next.palletJack,
+        next.secondManMile,
+        next.pickHold,
+        next.hazmat,
         changedAt,
         vehicleKey
       )
@@ -209,6 +265,26 @@ async function handleUpdatePricing(request, env) {
       )
     );
   });
+
+  statements.push(
+    env.DB.prepare(
+      `INSERT INTO pricing_settings (setting_key, setting_value, updated_at)
+       VALUES ('fuel_surcharge_percent', ?, ?)
+       ON CONFLICT(setting_key) DO UPDATE SET
+         setting_value = excluded.setting_value,
+         updated_at = excluded.updated_at`
+    ).bind(normalized.fuelSurchargePercent, changedAt)
+  );
+  statements.push(
+    env.DB.prepare(
+      `INSERT INTO pricing_audit (vehicle_key, previous_values, new_values, changed_at)
+       VALUES ('__global__', ?, ?, ?)`
+    ).bind(
+      JSON.stringify({ fuelSurchargePercent: previous.fuelSurchargePercent }),
+      JSON.stringify({ fuelSurchargePercent: normalized.fuelSurchargePercent }),
+      changedAt
+    )
+  );
 
   await env.DB.batch(statements);
   return jsonResponse(await readPricing(env.DB), 200);
